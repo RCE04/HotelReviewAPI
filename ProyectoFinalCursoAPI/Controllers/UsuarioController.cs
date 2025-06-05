@@ -159,6 +159,38 @@ namespace ProyectoFinalCursoAPI.Controllers
             return Ok(lugares);
         }
 
+        // DELETE: api/Usuarios/{usuarioId}/favorito/{lugarId}
+        [HttpDelete("{usuarioId}/favorito/{lugarId}")]
+        public async Task<IActionResult> EliminarFavorito(int usuarioId, int lugarId)
+        {
+            var usuario = await _context.Usuarios.FindAsync(usuarioId);
+            if (usuario == null)
+            {
+                return NotFound("Usuario no encontrado");
+            }
+
+            if (string.IsNullOrWhiteSpace(usuario.Favoritos))
+            {
+                return BadRequest("El usuario no tiene favoritos.");
+            }
+
+            var favoritos = usuario.Favoritos
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(int.Parse)
+                .ToList();
+
+            if (!favoritos.Contains(lugarId))
+            {
+                return NotFound("El lugar no está en la lista de favoritos.");
+            }
+
+            favoritos.Remove(lugarId);
+            usuario.Favoritos = string.Join(",", favoritos);
+            await _context.SaveChangesAsync();
+
+            return Ok("Lugar eliminado de favoritos.");
+        }
+
         private bool UsuarioExists(int id)
         {
             return _context.Usuarios.Any(e => e.Id == id);
